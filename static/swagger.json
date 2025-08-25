@@ -1,0 +1,805 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Akademik Yönetim Sistemi API",
+    "description": "Öğrencileri, dersleri, akademisyenleri ve sınavları yönetmek için bir API.",
+    "version": "1.0.0"
+  },
+  "host": "127.0.0.1:5000",
+  "basePath": "/api",
+  "schemes": [
+    "http"
+  ],
+  "securityDefinitions": {
+    "Bearer": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header"
+    }
+  },
+  "paths": {
+    "/login": {
+      "post": {
+        "summary": "Kullanıcı girişi ve JWT token alma",
+        "description": "Kullanıcı adı ve parola ile giriş yapar, başarılı olursa bir JWT token döndürür.",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "username": { "type": "string" },
+                "password": { "type": "string" }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": { 
+            "description": "Giriş başarılı. JWT token döndürür.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "token": { "type": "string" }
+              }
+            }
+          },
+          "401": { "description": "Geçersiz kimlik bilgileri" }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "summary": "Tüm kullanıcıları listele",
+        "security": [
+          { "Bearer": [] }
+        ],
+        "description": "Sadece Admin rolüne sahip kullanıcılar tarafından erişilebilir.",
+        "produces": ["application/json"],
+        "responses": {
+          "200": { 
+            "description": "Başarılı",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "users": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "integer" },
+                      "username": { "type": "string" },
+                      "email": { "type": "string" },
+                      "role_id": { "type": "integer" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": { "description": "Erişim Reddedildi: Yetersiz Yetki" }
+        }
+      },
+      "post": {
+        "summary": "Yeni bir kullanıcı oluştur",
+        "security": [
+          { "Bearer": [] }
+        ],
+        "description": "Sadece Admin rolüne sahip kullanıcılar tarafından erişilebilir.",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "username": { "type": "string" },
+                "password": { "type": "string" },
+                "email": { "type": "string" },
+                "role_id": { "type": "integer" }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": { 
+            "description": "Kullanıcı başarıyla oluşturuldu",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": { "type": "string" },
+                "user_id": { "type": "integer" },
+                "username": { "type": "string" },
+                "role_name": { "type": "string" }
+              }
+            }
+          },
+          "400": { "description": "Eksik bilgi" },
+          "409": { "description": "Kullanıcı adı veya e-posta zaten kullanımda" }
+        }
+      }
+    },
+    "/users/{user_id}": {
+      "get": {
+        "summary": "Kullanıcıyı ID ile getir",
+        "security": [
+          { "Bearer": [] }
+        ],
+        "parameters": [
+          { "name": "user_id", "in": "path", "required": true, "type": "integer" }
+        ],
+        "responses": {
+          "200": { 
+            "description": "Başarılı",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "integer" },
+                "username": { "type": "string" },
+                "email": { "type": "string" },
+                "role_id": { "type": "integer" },
+                "role_name": { "type": "string" }
+              }
+            }
+          },
+          "403": { "description": "Erişim Reddedildi" },
+          "404": { "description": "Kullanıcı bulunamadı" }
+        }
+      },
+      "put": {
+        "summary": "Kullanıcı bilgilerini güncelle",
+        "security": [
+          { "Bearer": [] }
+        ],
+        "parameters": [
+          { "name": "user_id", "in": "path", "required": true, "type": "integer" },
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "username": { "type": "string" },
+                "email": { "type": "string" },
+                "password": { "type": "string" }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Başarılı" },
+          "403": { "description": "Erişim Reddedildi" },
+          "404": { "description": "Kullanıcı bulunamadı" }
+        }
+      },
+      "delete": {
+        "summary": "Kullanıcıyı sil",
+        "security": [
+          { "Bearer": [] }
+        ],
+        "description": "Sadece Admin rolü erişebilir.",
+        "parameters": [
+          { "name": "user_id", "in": "path", "required": true, "type": "integer" }
+        ],
+        "responses": {
+          "200": { "description": "Başarılı" },
+          "403": { "description": "Erişim Reddedildi: Yetersiz Yetki" },
+          "404": { "description": "Kullanıcı bulunamadı" }
+        }
+      }
+    },
+    "/departments": {
+      "get": {
+        "summary": "Tüm bölümleri listele",
+        "responses": {
+          "200": { 
+            "description": "Başarılı",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "departments": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "integer" },
+                      "department_name": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Yeni bir bölüm oluştur",
+        "security": [
+          { "Bearer": [] }
+        ],
+        "description": "Sadece Admin rolüne sahip kullanıcılar tarafından erişilebilir.",
+        "consumes": ["application/json"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "department_name": { "type": "string" }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": { 
+            "description": "Bölüm başarıyla oluşturuldu",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": { "type": "string" },
+                "department_id": { "type": "integer" }
+              }
+            }
+          },
+          "400": { "description": "Eksik bilgi" }
+        }
+      }
+    },
+    "/departments/{department_id}": {
+      "delete": {
+        "summary": "Bölüm sil",
+        "security": [
+          { "Bearer": [] }
+        ],
+        "description": "Sadece Admin rolüne sahip kullanıcılar tarafından erişilebilir.",
+        "parameters": [
+          { "name": "department_id", "in": "path", "required": true, "type": "integer" }
+        ],
+        "responses": {
+          "200": { "description": "Başarılı" },
+          "403": { "description": "Erişim Reddedildi" },
+          "404": { "description": "Bölüm bulunamadı" }
+        }
+      }
+    },
+    "/courses": {
+      "get": {
+        "summary": "Tüm dersleri listele",
+        "responses": {
+          "200": { 
+            "description": "Başarılı",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "courses": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "integer" },
+                      "course_code": { "type": "string" },
+                      "course_name": { "type": "string" },
+                      "credits": { "type": "integer" },
+                      "department_id": { "type": "integer" },
+                      "professor_id": { "type": "integer" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Yeni bir ders oluştur",
+        "security": [
+          { "Bearer": [] }
+        ],
+        "description": "Sadece Admin ve Professor rolleri erişebilir.",
+        "consumes": ["application/json"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "course_code": { "type": "string" },
+                "course_name": { "type": "string" },
+                "credits": { "type": "integer" },
+                "department_id": { "type": "integer" },
+                "professor_id": { "type": "integer" }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": { 
+            "description": "Ders başarıyla oluşturuldu",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": { "type": "string" },
+                "course_id": { "type": "integer" }
+              }
+            }
+          },
+          "400": { "description": "Eksik bilgi" }
+        }
+      }
+    },
+    "/courses/{course_id}": {
+      "delete": {
+        "summary": "Ders sil",
+        "security": [
+          { "Bearer": [] }
+        ],
+        "description": "Sadece Admin rolü erişebilir.",
+        "parameters": [
+          { "name": "course_id", "in": "path", "required": true, "type": "integer" }
+        ],
+        "responses": {
+          "200": { "description": "Başarılı" },
+          "403": { "description": "Erişim Reddedildi" },
+          "404": { "description": "Ders bulunamadı" }
+        }
+      }
+    },
+    "/students": {
+      "get": {
+        "summary": "Tüm öğrencileri listele",
+        "security": [
+          { "Bearer": [] }
+        ],
+        "description": "Sadece Admin ve Professor rolleri erişebilir.",
+        "produces": ["application/json"],
+        "responses": {
+          "200": { 
+            "description": "Başarılı",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "students": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "integer" },
+                      "student_id": { "type": "integer" },
+                      "first_name": { "type": "string" },
+                      "last_name": { "type": "string" },
+                      "user_id": { "type": "integer" },
+                      "department_id": { "type": "integer" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": { "description": "Erişim Reddedildi" }
+        }
+      },
+      "post": {
+        "summary": "Yeni bir öğrenci oluştur",
+        "security": [
+          { "Bearer": [] }
+        ],
+        "description": "Sadece Admin rolü erişebilir.",
+        "consumes": ["application/json"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "username": { "type": "string" },
+                "password": { "type": "string" },
+                "email": { "type": "string" },
+                "student_id": { "type": "integer" },
+                "first_name": { "type": "string" },
+                "last_name": { "type": "string" },
+                "department_id": { "type": "integer" }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": { 
+            "description": "Öğrenci ve kullanıcı hesabı başarıyla oluşturuldu",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": { "type": "string" },
+                "user_id": { "type": "integer" },
+                "student_id": { "type": "integer" }
+              }
+            }
+          },
+          "400": { "description": "Eksik bilgi" }
+        }
+      }
+    },
+    "/students/{student_id}": {
+      "get": {
+        "summary": "Öğrenciyi ID ile getir",
+        "security": [
+          { "Bearer": [] }
+        ],
+        "parameters": [
+          { "name": "student_id", "in": "path", "required": true, "type": "integer" }
+        ],
+        "responses": {
+          "200": { 
+            "description": "Başarılı",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "integer" },
+                "student_id": { "type": "integer" },
+                "first_name": { "type": "string" },
+                "last_name": { "type": "string" },
+                "user_id": { "type": "integer" },
+                "department_id": { "type": "integer" }
+              }
+            }
+          },
+          "403": { "description": "Erişim Reddedildi" },
+          "404": { "description": "Öğrenci bulunamadı" }
+        }
+      },
+      "delete": {
+        "summary": "Öğrenciyi sil",
+        "security": [
+          { "Bearer": [] }
+        ],
+        "description": "Sadece Admin rolü erişebilir.",
+        "parameters": [
+          { "name": "student_id", "in": "path", "required": true, "type": "integer" }
+        ],
+        "responses": {
+          "200": { "description": "Başarılı" },
+          "403": { "description": "Erişim Reddedildi" },
+          "404": { "description": "Öğrenci bulunamadı" }
+        }
+      }
+    },
+    "/professors": {
+      "get": {
+        "summary": "Tüm akademisyenleri listele",
+        "responses": {
+          "200": { 
+            "description": "Başarılı",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "professors": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "integer" },
+                      "first_name": { "type": "string" },
+                      "last_name": { "type": "string" },
+                      "title": { "type": "string" },
+                      "user_id": { "type": "integer" },
+                      "department_id": { "type": "integer" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Yeni bir akademisyen oluştur",
+        "security": [
+          { "Bearer": [] }
+        ],
+        "description": "Sadece Admin rolü erişebilir.",
+        "consumes": ["application/json"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "username": { "type": "string" },
+                "password": { "type": "string" },
+                "email": { "type": "string" },
+                "first_name": { "type": "string" },
+                "last_name": { "type": "string" },
+                "title": { "type": "string" },
+                "department_id": { "type": "integer" }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": { 
+            "description": "Profesör ve kullanıcı hesabı başarıyla oluşturuldu",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": { "type": "string" },
+                "user_id": { "type": "integer" },
+                "professor_id": { "type": "integer" }
+              }
+            }
+          },
+          "400": { "description": "Eksik bilgi" }
+        }
+      }
+    },
+    "/professors/{professor_id}": {
+      "get": {
+        "summary": "Akademisyeni ID ile getir",
+        "security": [
+          { "Bearer": [] }
+        ],
+        "parameters": [
+          { "name": "professor_id", "in": "path", "required": true, "type": "integer" }
+        ],
+        "responses": {
+          "200": { 
+            "description": "Başarılı",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "integer" },
+                "first_name": { "type": "string" },
+                "last_name": { "type": "string" },
+                "title": { "type": "string" },
+                "user_id": { "type": "integer" },
+                "department_id": { "type": "integer" }
+              }
+            }
+          },
+          "403": { "description": "Erişim Reddedildi" },
+          "404": { "description": "Akademisyen bulunamadı" }
+        }
+      },
+      "delete": {
+        "summary": "Akademisyeni sil",
+        "security": [
+          { "Bearer": [] }
+        ],
+        "description": "Sadece Admin rolü erişebilir.",
+        "parameters": [
+          { "name": "professor_id", "in": "path", "required": true, "type": "integer" }
+        ],
+        "responses": {
+          "200": { "description": "Başarılı" },
+          "403": { "description": "Erişim Reddedildi" },
+          "404": { "description": "Akademisyen bulunamadı" }
+        }
+      }
+    },
+    "/registrations": {
+      "get": {
+        "summary": "Tüm ders kayıtlarını listele",
+        "security": [
+          { "Bearer": [] }
+        ],
+        "description": "Sadece Admin ve Professor rolleri erişebilir.",
+        "responses": {
+          "200": { 
+            "description": "Başarılı",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "registrations": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "integer" },
+                      "student_id": { "type": "integer" },
+                      "course_id": { "type": "integer" },
+                      "registration_date": { "type": "string", "format": "date-time" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": { "description": "Erişim Reddedildi" }
+        }
+      },
+      "post": {
+        "summary": "Bir öğrenciyi derse kaydet",
+        "security": [
+          { "Bearer": [] }
+        ],
+        "description": "Sadece Admin ve Professor rolleri erişebilir.",
+        "consumes": ["application/json"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "student_id": { "type": "integer" },
+                "course_id": { "type": "integer" }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": { "description": "Ders başarıyla kaydedildi" },
+          "400": { "description": "Eksik bilgi" },
+          "404": { "description": "Öğrenci veya ders bulunamadı" },
+          "409": { "description": "Öğrenci bu derse zaten kayıtlı" }
+        }
+      }
+    },
+    "/exams": {
+      "post": {
+        "summary": "Yeni bir sınav oluştur",
+        "security": [
+          { "Bearer": [] }
+        ],
+        "description": "Sadece Admin ve Professor rolleri erişebilir.",
+        "consumes": ["application/json"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "exam_type": { "type": "string" },
+                "exam_date": { "type": "string", "format": "date-time" },
+                "course_id": { "type": "integer" }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": { "description": "Sınav başarıyla oluşturuldu" },
+          "400": { "description": "Eksik bilgi" },
+          "404": { "description": "Ders bulunamadı" }
+        }
+      }
+    },
+    "/exam_results": {
+      "post": {
+        "summary": "Bir sınav için not gir",
+        "security": [
+          { "Bearer": [] }
+        ],
+        "description": "Sadece Admin ve Professor rolleri erişebilir.",
+        "consumes": ["application/json"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "student_id": { "type": "integer" },
+                "exam_id": { "type": "integer" },
+                "grade": { "type": "number" }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": { "description": "Sınav sonucu başarıyla kaydedildi" },
+          "400": { "description": "Eksik bilgi" },
+          "404": { "description": "Öğrenci veya sınav bulunamadı" },
+          "409": { "description": "Sonuç zaten mevcut" }
+        }
+      }
+    },
+    "/exam_results/student/{student_id}": {
+      "get": {
+        "summary": "Bir öğrencinin sınav sonuçlarını listele",
+        "security": [
+          { "Bearer": [] }
+        ],
+        "description": "Sadece Admin, Professor ve ilgili öğrenci erişebilir.",
+        "parameters": [
+          { "name": "student_id", "in": "path", "required": true, "type": "integer" }
+        ],
+        "responses": {
+          "200": { 
+            "description": "Başarılı",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "exam_results": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "exam_id": { "type": "integer" },
+                      "grade": { "type": "number" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": { "description": "Erişim Reddedildi" },
+          "404": { "description": "Sonuç bulunamadı" }
+        }
+      }
+    },
+    "/announcements": {
+      "get": {
+        "summary": "Tüm duyuruları listele",
+        "responses": {
+          "200": { 
+            "description": "Başarılı",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "announcements": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "integer" },
+                      "title": { "type": "string" },
+                      "content": { "type": "string" },
+                      "date_posted": { "type": "string", "format": "date-time" },
+                      "course_id": { "type": "integer" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Yeni bir duyuru oluştur",
+        "security": [
+          { "Bearer": [] }
+        ],
+        "description": "Sadece Admin ve Professor rolleri erişebilir.",
+        "consumes": ["application/json"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "title": { "type": "string" },
+                "content": { "type": "string" },
+                "course_id": { "type": "integer" }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": { "description": "Duyuru başarıyla oluşturuldu" },
+          "400": { "description": "Eksik bilgi" },
+          "404": { "description": "Ders bulunamadı" }
+        }
+      }
+    }
+  }
+}
